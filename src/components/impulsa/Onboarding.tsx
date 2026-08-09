@@ -82,9 +82,9 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
         {step === 3 && (
           <section>
             <h2 className="text-2xl font-bold">Situación {situation + 1} de {STRENGTH_SITUATIONS.length}</h2>
-            <p className="mt-3 text-sm text-muted-foreground">{STRENGTH_SITUATIONS[situation].question}</p>
+            <p className="mt-3 text-sm text-muted-foreground">{STRENGTH_SITUATIONS[situation]?.question}</p>
             <div className="mt-6 grid gap-3">
-              {STRENGTH_SITUATIONS[situation].options.map((o) => (
+              {(STRENGTH_SITUATIONS[situation]?.options ?? []).map((o) => (
                 <button
                   key={o.strength}
                   onClick={() => {
