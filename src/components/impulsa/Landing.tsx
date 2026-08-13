@@ -6,7 +6,7 @@ export function Landing({ onStart }: { onStart: () => void }) {
       <div className="rounded-full bg-primary/15 p-4">
         <Robot size={200} />
       </div>
-      <p className="chip-base inline-block bg-accent/15 text-accent">ImpulsaIA · Tu mentor virtual</p>
+      <p className="chip-base inline-block bg-accent/15 text-accent">ImpulsaYA · Tu mentor virtual</p>
       <h1 className="text-3xl font-extrabold leading-tight">
         Tu futuro no tiene que estar decidido hoy
       </h1>
