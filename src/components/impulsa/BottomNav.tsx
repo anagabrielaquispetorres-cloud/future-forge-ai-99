@@ -2,7 +2,7 @@ export type Tab = "inicio" | "ia" | "explora" | "ruta";
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "inicio", label: "Inicio", icon: "🏠" },
-  { id: "ia", label: "Mi IA", icon: "🤖" },
+  { id: "ia", label: "Mi Guía", icon: "💬" },
   { id: "explora", label: "Explora", icon: "🧭" },
   { id: "ruta", label: "Mi Ruta", icon: "🎯" },
 ];
