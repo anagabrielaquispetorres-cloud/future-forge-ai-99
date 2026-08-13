@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useProfile } from "@/context/ProfileContext";
-import { INTERESTS, recommendedAreas, type Interest } from "@/lib/impulsa-data";
+import { AREAS, INTERESTS_BY_AREA, recommendedAreas, type Area } from "@/lib/impulsa-data";
 import { Robot } from "./Robot";
 
 export function Analyzing({ onDone }: { onDone: () => void }) {
   const { profile } = useProfile();
   const steps = [
-    "Leyendo tus intereses...",
-    "Cruzando tus fortalezas...",
+    "🤖 ImpulsaYA está analizando tu perfil...",
+    "Cruzando tus fortalezas con áreas reales...",
     `Buscando caminos para ${profile.name || "ti"}...`,
   ];
   const [i, setI] = useState(0);
@@ -38,9 +38,10 @@ export function Analyzing({ onDone }: { onDone: () => void }) {
 export function ProfileSynthesis({ onDone }: { onDone: () => void }) {
   const { profile, update } = useProfile();
   const [editing, setEditing] = useState(false);
+  const [openArea, setOpenArea] = useState<Area>(recommendedAreas(profile)[0] ?? "Tecnología");
   const areas = recommendedAreas(profile);
 
-  const toggleInterest = (id: Interest) =>
+  const toggleInterest = (id: string) =>
     update({
       interests: profile.interests.includes(id)
         ? profile.interests.filter((x) => x !== id)
@@ -64,22 +65,24 @@ export function ProfileSynthesis({ onDone }: { onDone: () => void }) {
         <div>
           <p className="text-xs uppercase tracking-wide text-muted-foreground">3 áreas recomendadas</p>
           <ol className="mt-2 space-y-2">
-            {areas.map((a, idx) => (
-              <li key={a} className="flex items-center gap-3 rounded-2xl bg-primary/25 px-4 py-3 text-sm">
-                <span className="flex size-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">{idx + 1}</span>
-                {a}
-              </li>
-            ))}
+            {areas.map((a, idx) => {
+              const meta = AREAS.find((x) => x.id === a);
+              return (
+                <li key={a} className="rounded-2xl border border-accent/30 bg-accent/10 px-4 py-3 text-sm">
+                  <span className="font-semibold text-accent">{idx + 1}. {meta?.emoji} {a}</span>
+                  <span className="block text-xs text-muted-foreground">{meta?.tagline}</span>
+                </li>
+              );
+            })}
           </ol>
         </div>
+        {profile.dreamText && (
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Tu vida ideal en 5 años</p>
+            <p className="mt-1 text-sm italic text-foreground/90">“{profile.dreamText.slice(0, 240)}”</p>
+          </div>
+        )}
       </div>
-
-      {profile.dreamText && (
-        <div className="card-surface mt-4 p-5">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Tu sueño en 5 años</p>
-          <p className="mt-2 text-sm italic">“{profile.dreamText}”</p>
-        </div>
-      )}
 
       <button
         onClick={() => setEditing((v) => !v)}
@@ -92,13 +95,24 @@ export function ProfileSynthesis({ onDone }: { onDone: () => void }) {
         <div className="card-surface mt-3 p-5">
           <p className="text-sm text-muted-foreground">Ajusta tus intereses y recalculo todo:</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            {INTERESTS.map((i) => (
+            {AREAS.map((a) => (
               <button
-                key={i.id}
-                onClick={() => toggleInterest(i.id)}
-                className={`chip-base ${profile.interests.includes(i.id) ? "border-accent bg-accent font-semibold text-accent-foreground" : "bg-background"}`}
+                key={a.id}
+                onClick={() => setOpenArea(a.id)}
+                className={`chip-base text-xs ${openArea === a.id ? "border-accent bg-accent text-accent-foreground" : "bg-background"}`}
               >
-                {i.emoji} {i.id}
+                {a.emoji} {a.id}
+              </button>
+            ))}
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
+            {(INTERESTS_BY_AREA[openArea] ?? []).map((i) => (
+              <button
+                key={i}
+                onClick={() => toggleInterest(i)}
+                className={`chip-base text-xs ${profile.interests.includes(i) ? "border-accent bg-accent font-semibold text-accent-foreground" : "bg-background"}`}
+              >
+                {i}
               </button>
             ))}
           </div>
@@ -122,7 +136,7 @@ function Block({ title, items }: { title: string; items: string[] }) {
       <div className="mt-2 flex flex-wrap gap-2">
         {items.length === 0 && <span className="text-sm text-muted-foreground">—</span>}
         {items.map((it) => (
-          <span key={it} className="chip-base border-accent/40 bg-accent/15 text-accent">{it}</span>
+          <span key={it} className="chip-base border-accent/40 bg-accent/15 text-xs text-accent">{it}</span>
         ))}
       </div>
     </div>
