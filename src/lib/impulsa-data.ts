@@ -248,7 +248,7 @@ export type Opportunity = {
   interests: string[];
   strengths: string[];
   emoji: string;
-  link: { label: string; url: string };
+  link: { label: string; url: string; note: string };
   quiz: { q: string; options: string[] }[];
 };
 
