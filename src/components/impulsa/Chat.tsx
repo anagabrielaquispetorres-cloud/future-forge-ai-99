@@ -1,28 +1,46 @@
 import { useEffect, useRef, useState } from "react";
 import { useProfile } from "@/context/ProfileContext";
-import { rankedOpportunities, type UserProfile } from "@/lib/impulsa-data";
+import { rankedOpportunities, recommendedAreas, type UserProfile } from "@/lib/impulsa-data";
 import { Robot } from "./Robot";
 
 type Msg = { id: number; from: "ia" | "user"; text: string };
 
-const QUICK = ["Ver mis fortalezas", "Explorar opciones", "No sé qué hacer"];
+const QUICK = [
+  "Ver mis fortalezas",
+  "Explorar carreras técnicas",
+  "Cursos gratuitos",
+  "Becas para mí",
+  "Voluntariados",
+  "No sé qué hacer",
+];
 
 function reply(input: string, p: UserProfile): string {
-  const top = rankedOpportunities(p).slice(0, 3);
-  const interests = p.interests.join(", ") || "lo que te mueve";
+  const ranked = rankedOpportunities(p);
+  const top = ranked.slice(0, 3);
+  const interests = p.interests.slice(0, 3).join(", ") || "lo que te mueve";
+  const areas = recommendedAreas(p).join(", ");
   const t = input.toLowerCase();
+  const byCat = (c: string) => ranked.filter((o) => o.category === c).slice(0, 3);
 
   if (t.includes("fortaleza"))
-    return `${p.name}, en tus respuestas noté que destacas en ${p.strengths.join(" y ") || "varias cosas"}. Eso encaja muy bien con espacios donde puedas ${p.strengths.includes("Liderar") ? "coordinar equipos" : "aportar soluciones"} dentro de ${interests}.`;
-  if (t.includes("explorar") || t.includes("opcion"))
-    return `Con tu perfil (${interests}) te propongo empezar por: ${top.map((o) => `${o.emoji} ${o.title}`).join(", ")}. Entra a 🧭 Explora y prueba el mini reto de la que más te llame.`;
-  if (t.includes("no sé") || t.includes("no se"))
-    return `Tranqui, ${p.name}. No saber también es un punto de partida válido. Empecemos pequeño: de ${interests}, ¿cuál te daría más curiosidad probar una semana? No es una decisión para toda la vida.`;
-  if (t.includes("miedo") || t.includes("presion") || t.includes("presión"))
-    return `Te entiendo, ${p.name}. Sentir presión es normal, sobre todo cuando estás en etapa "${p.stage}". Recuerda que tu valor no depende de acertar a la primera. ¿Quieres que veamos un paso pequeño para esta semana?`;
+    return `${p.name}, en tus respuestas destacas en ${p.strengths.join(" y ") || "varias cosas"}. Eso encaja muy bien en ${areas}, sobre todo donde puedas ${p.strengths.includes("Liderar") ? "coordinar equipos" : "aportar soluciones"}.`;
+  if (t.includes("técnic") || t.includes("tecnic") || t.includes("oficio"))
+    return `Mira estas rutas técnicas con salida rápida: ${byCat("Formación Técnica").map((o) => `${o.emoji} ${o.title}`).join(", ")}. Son de corto plazo y puedes empezar a trabajar antes.`;
+  if (t.includes("curso"))
+    return `Cursos gratis alineados a ${interests}: ${byCat("Cursos Gratis").map((o) => o.title).join(", ")}. Cada uno trae su enlace real en 🧭 Explora.`;
   if (t.includes("beca") || t.includes("dinero") || t.includes("estudiar"))
-    return `Hay becas alineadas a ${interests}. Filtra por "Becas" en 🧭 Explora y te muestro las que encajan contigo.`;
-  return `Me quedo con eso, ${p.name}. Por lo que me cuentas y tus intereses en ${interests}, creo que vale la pena mirar ${top[0]?.title ?? "nuevas opciones"}. ¿Quieres que lo exploremos juntos?`;
+    return `Becas que encajan contigo: ${byCat("Becas").map((o) => o.title).join(", ")}. Filtra por "🎓 Becas" en Explora y revisa requisitos.`;
+  if (t.includes("voluntar"))
+    return `Si quieres impacto real ya: ${byCat("Voluntariados").map((o) => o.title).join(", ")}. Es la forma más rápida de probar un área sin arriesgar nada.`;
+  if (t.includes("trabajo") || t.includes("empleo"))
+    return `Con tu perfil podrías empezar por ${byCat("Trabajo").map((o) => o.title).join(", ")}. Son puestos de entrada donde se aprende haciendo.`;
+  if (t.includes("no sé") || t.includes("no se"))
+    return `Tranqui, ${p.name}. No saber también es un punto de partida. De ${interests}, ¿cuál probarías una semana? Empieza con el mini reto de ${top[0]?.title ?? "alguna opción"}: no es una decisión para toda la vida.`;
+  if (t.includes("miedo") || t.includes("presion") || t.includes("presión") || t.includes("triste"))
+    return `Te entiendo, ${p.name}. Sentir presión en la etapa "${p.stage}" es normal. Tu valor no depende de acertar a la primera. ¿Vemos un paso pequeño para esta semana?`;
+  if (t.includes("gracias"))
+    return `Siempre, ${p.name} 💙 Aquí sigo cuando quieras seguir explorando.`;
+  return `Me quedo con eso, ${p.name}. Por tus intereses en ${interests} y tus valores (${p.values.join(", ") || "los que elegiste"}), creo que vale la pena mirar ${top[0]?.title ?? "nuevas opciones"}. ¿Lo exploramos juntos?`;
 }
 
 export function Chat() {
@@ -31,7 +49,7 @@ export function Chat() {
     {
       id: 0,
       from: "ia",
-      text: `¡Hola ${profile.name}! Soy tu Guía IA. Vi que te interesa ${profile.interests.join(", ") || "explorar"}. ¿De qué quieres hablar hoy?`,
+      text: `¡Hola ${profile.name}! Soy tu Guía Impulsa. Vi que te interesa ${profile.interests.slice(0, 3).join(", ") || "explorar"}. ¿De qué quieres hablar hoy?`,
     },
   ]);
   const [input, setInput] = useState("");
@@ -55,11 +73,11 @@ export function Chat() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col pb-28">
+    <div className="flex min-h-screen flex-col pb-44">
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background/95 px-5 py-3 backdrop-blur">
         <Robot size={44} />
         <div>
-          <p className="font-semibold">Guía IA</p>
+          <p className="font-semibold">Guía Impulsa</p>
           <p className="text-xs text-accent">en línea · te conoce</p>
         </div>
       </header>
@@ -77,14 +95,14 @@ export function Chat() {
             </div>
           ),
         )}
-        {typing && <p className="text-sm text-accent">Guía IA está escribiendo…</p>}
+        {typing && <p className="text-sm text-accent">Guía Impulsa está escribiendo…</p>}
         <div ref={endRef} />
       </div>
 
       <div className="fixed inset-x-0 bottom-16 mx-auto max-w-md bg-background/95 px-5 pb-3 pt-2 backdrop-blur">
         <div className="mb-2 flex gap-2 overflow-x-auto">
           {QUICK.map((q) => (
-            <button key={q} onClick={() => send(q)} className="chip-base shrink-0 border-accent/40 bg-accent/15 text-accent">
+            <button key={q} onClick={() => send(q)} className="chip-base shrink-0 border-accent/40 bg-accent/15 text-xs text-accent">
               {q}
             </button>
           ))}

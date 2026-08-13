@@ -1,26 +1,30 @@
 import { useState } from "react";
 import { useProfile } from "@/context/ProfileContext";
 import {
-  INTERESTS,
+  AREAS,
+  INTERESTS_BY_AREA,
   STAGES,
   STRENGTH_SITUATIONS,
   VALUES,
-  type Interest,
+  type Area,
 } from "@/lib/impulsa-data";
+import { Robot } from "./Robot";
 
 const TOTAL = 5;
+const SITUATIONS = 5;
 
 export function Onboarding({ onDone }: { onDone: () => void }) {
   const { profile, update } = useProfile();
   const [step, setStep] = useState(1);
   const [situation, setSituation] = useState(0);
+  const [openArea, setOpenArea] = useState<Area>("Tecnología");
 
   const toggle = <T,>(list: T[], v: T, max?: number) =>
     list.includes(v) ? list.filter((x) => x !== v) : max && list.length >= max ? list : [...list, v];
 
   const canNext =
     (step === 1 && !!profile.stage) ||
-    (step === 2 && profile.interests.length > 0) ||
+    (step === 2 && profile.interests.length >= 3) ||
     (step === 3 && profile.strengths.length > 0) ||
     (step === 4 && profile.values.length > 0) ||
     (step === 5 && profile.dreamText.trim().length > 3);
@@ -28,7 +32,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
   const next = () => (step === TOTAL ? onDone() : setStep(step + 1));
 
   const chip = (active: boolean) =>
-    `chip-base ${active ? "bg-accent text-accent-foreground border-accent font-semibold" : "bg-card text-foreground hover:border-accent"}`;
+    `chip-base text-left ${active ? "bg-accent text-accent-foreground border-accent font-semibold" : "bg-card text-foreground hover:border-accent"}`;
 
   return (
     <div className="flex min-h-screen flex-col px-6 py-8">
@@ -45,6 +49,10 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       <div className="flex-1">
         {step === 1 && (
           <section>
+            <div className="mb-4 flex items-center gap-3">
+              <Robot size={56} />
+              <p className="text-sm text-accent">Guía Impulsa te acompaña</p>
+            </div>
             <h2 className="text-2xl font-bold">¿En qué etapa estás{profile.name ? `, ${profile.name}` : ""}?</h2>
             <p className="mt-1 text-sm text-muted-foreground">Esto me ayuda a ajustar mis sugerencias.</p>
             <div className="mt-6 grid gap-3">
@@ -64,16 +72,35 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
         {step === 2 && (
           <section>
             <h2 className="text-2xl font-bold">¿Qué te interesa?</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Elige todos los que quieras.</p>
-            <div className="mt-6 flex flex-wrap gap-2">
-              {INTERESTS.map((i) => (
-                <button
-                  key={i.id}
-                  onClick={() => update({ interests: toggle<Interest>(profile.interests, i.id) })}
-                  className={chip(profile.interests.includes(i.id))}
-                >
-                  {i.emoji} {i.id}
-                </button>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Elige al menos 3 en cualquier área. ({profile.interests.length} elegidos)
+            </p>
+            <div className="mt-5 space-y-3">
+              {AREAS.map((a) => (
+                <div key={a.id} className="card-surface overflow-hidden">
+                  <button
+                    onClick={() => setOpenArea(openArea === a.id ? ("" as Area) : a.id)}
+                    className="flex w-full items-center justify-between px-4 py-3 text-left"
+                  >
+                    <span className="font-semibold">{a.emoji} {a.id}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {profile.interests.filter((i) => INTERESTS_BY_AREA[a.id].includes(i)).length || ""} {openArea === a.id ? "▲" : "▼"}
+                    </span>
+                  </button>
+                  {openArea === a.id && (
+                    <div className="flex flex-wrap gap-2 border-t border-border p-4">
+                      {INTERESTS_BY_AREA[a.id].map((i) => (
+                        <button
+                          key={i}
+                          onClick={() => update({ interests: toggle(profile.interests, i) })}
+                          className={chip(profile.interests.includes(i))}
+                        >
+                          {i}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </section>
@@ -81,16 +108,16 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
 
         {step === 3 && (
           <section>
-            <h2 className="text-2xl font-bold">Situación {situation + 1} de {STRENGTH_SITUATIONS.length}</h2>
-            <p className="mt-3 text-sm text-muted-foreground">{STRENGTH_SITUATIONS[situation]?.question}</p>
+            <p className="text-xs uppercase tracking-wide text-accent">Situación {situation + 1} de {SITUATIONS}</p>
+            <h2 className="mt-2 text-xl font-bold">{STRENGTH_SITUATIONS[situation]?.question}</h2>
             <div className="mt-6 grid gap-3">
               {(STRENGTH_SITUATIONS[situation]?.options ?? []).map((o) => (
                 <button
-                  key={o.strength}
+                  key={o.label}
                   onClick={() => {
                     if (!profile.strengths.includes(o.strength))
                       update({ strengths: [...profile.strengths, o.strength] });
-                    if (situation < STRENGTH_SITUATIONS.length - 1) setSituation(situation + 1);
+                    if (situation < SITUATIONS - 1) setSituation(situation + 1);
                   }}
                   className="card-surface w-full px-5 py-4 text-left transition hover:brightness-110"
                 >
@@ -100,6 +127,11 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
             </div>
             {profile.strengths.length > 0 && (
               <p className="mt-4 text-sm text-accent">Fortalezas detectadas: {profile.strengths.join(", ")}</p>
+            )}
+            {situation > 0 && (
+              <button onClick={() => setSituation(situation - 1)} className="mt-4 text-xs text-muted-foreground">
+                ← Situación anterior
+              </button>
             )}
           </section>
         )}
@@ -124,7 +156,8 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
 
         {step === 5 && (
           <section>
-            <h2 className="text-2xl font-bold">¿Cómo imaginas tu vida ideal en 5 años?</h2>
+            <p className="text-xs uppercase tracking-wide text-accent">✨ La pregunta de oro</p>
+            <h2 className="mt-2 text-2xl font-bold">¿Cómo imaginas tu vida ideal en 5 años?</h2>
             <textarea
               value={profile.dreamText}
               maxLength={800}

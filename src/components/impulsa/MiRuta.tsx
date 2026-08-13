@@ -1,15 +1,17 @@
 import { useProfile } from "@/context/ProfileContext";
-import { rankedOpportunities } from "@/lib/impulsa-data";
+import { globalProgress, rankedOpportunities } from "@/lib/impulsa-data";
 
 export function MiRuta() {
   const { profile, update } = useProfile();
   const top = rankedOpportunities(profile).slice(0, 3);
+  const progress = globalProgress(profile);
 
   const steps = [
-    { id: "descubrimiento", title: "Descubrimiento", desc: `Definiste tu etapa (${profile.stage}) y tus intereses.`, auto: profile.interests.length > 0 },
-    { id: "exploracion", title: "Exploración", desc: `Revisa ${top.map((t) => t.title).join(", ") || "tus opciones"}.`, auto: false },
-    { id: "reto", title: "Mini Reto", desc: "Completa un “Ponme a prueba” en Explora.", auto: false },
-    { id: "reflexion", title: "Reflexión", desc: "Decide tu siguiente paso concreto de esta semana.", auto: false },
+    { id: "descubrimiento", title: "1. Descubrimiento", desc: `Definiste tu etapa (${profile.stage}) y ${profile.interests.length} intereses.`, auto: profile.interests.length > 0 },
+    { id: "exploracion", title: "2. Exploración", desc: `Revisa ${top.map((t) => t.title).join(", ") || "tus opciones"}.`, auto: false },
+    { id: "reto", title: "3. Mini Reto", desc: "Completa un “Ponme a prueba” en Explora.", auto: profile.completedChallenges.length > 0 },
+    { id: "reflexion", title: "4. Reflexión", desc: "Cuéntame qué sentiste tras el reto.", auto: profile.reflections.length > 0 },
+    { id: "accion", title: "5. Siguiente Acción Real", desc: "Inscríbete o contacta un recurso concreto.", auto: false },
   ];
 
   const isDone = (id: string, auto: boolean) => auto || profile.completedSteps.includes(id);
@@ -19,6 +21,11 @@ export function MiRuta() {
       completedSteps: profile.completedSteps.includes(id)
         ? profile.completedSteps.filter((s) => s !== id)
         : [...profile.completedSteps, id],
+    });
+
+  const toggleMilestone = (id: string) =>
+    update({
+      dynamicRoute: profile.dynamicRoute.map((m) => (m.id === id ? { ...m, done: !m.done } : m)),
     });
 
   const total = steps.filter((s) => isDone(s.id, s.auto)).length;
@@ -34,8 +41,8 @@ export function MiRuta() {
 
       <div className="card-surface p-5">
         <div className="mb-2 flex justify-between text-xs text-muted-foreground">
-          <span>Progreso</span>
-          <span>{total}/{steps.length}</span>
+          <span>Progreso de la ruta</span>
+          <span>{total}/{steps.length} · {progress}% global</span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-background">
           <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${(total / steps.length) * 100}%` }} />
@@ -65,6 +72,26 @@ export function MiRuta() {
           );
         })}
       </ol>
+
+      {profile.dynamicRoute.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Hitos añadidos por tus reflexiones
+          </h2>
+          <div className="space-y-2">
+            {profile.dynamicRoute.map((m) => (
+              <button
+                key={m.id}
+                onClick={() => toggleMilestone(m.id)}
+                className={`card-surface w-full p-4 text-left text-sm transition ${m.done ? "ring-1 ring-accent" : ""}`}
+              >
+                <p className="font-semibold">{m.done ? "✅" : "⬜"} {m.title}</p>
+                <p className="text-xs text-muted-foreground">{m.detail}</p>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Metas sugeridas</h2>
