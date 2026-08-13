@@ -11,8 +11,8 @@ export function Landing({ onStart }: { onStart: () => void }) {
         Tu futuro no tiene que estar decidido hoy
       </h1>
       <p className="max-w-sm text-sm text-muted-foreground">
-        Soy tu Guía IA. Te acompaño paso a paso a descubrir qué te mueve, en qué eres bueno y qué
-        caminos existen para ti.
+        &nbsp;Te acompaño paso a paso a descubrir qué te mueve, en qué eres bueno y qué caminos
+        existen para ti.
       </p>
       <button
         onClick={onStart}
