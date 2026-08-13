@@ -8,7 +8,7 @@ export function Landing({ onStart }: { onStart: () => void }) {
       </div>
       <p className="chip-base inline-block bg-accent/15 text-accent">ImpulsaYA · Tu mentor virtual</p>
       <h1 className="text-3xl font-extrabold leading-tight">
-        Tu futuro no tiene que estar decidido hoy
+        Tu futuro no tiene que estar decidido hoy. Construye tu camino ya.
       </h1>
       <p className="max-w-sm text-sm text-muted-foreground">
         &nbsp;Te acompaño paso a paso a descubrir qué te mueve, en qué eres bueno y qué caminos
